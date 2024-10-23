@@ -6,17 +6,17 @@
 
 ## 1. Select
 ```sql
-SELECT [DISTINCT] column1, column2, ...
+SELECT [DISTINCT] [TOP N] column1, column2, ...
 FROM Table1 t1, Table2 t2, ...
 WHERE condition
 [GROUP BY column1]
 [HAVING condition]
-[UNION | UNION ALL | INTERSECT | EXCEPT]
 [ORDER BY column1]
 ```
 
 ```sql
-SELEct Over18 = S.age - 18, S.age * 2 AS DoubleAge, S.weight / (S.height * S.height) BMI
+SELECT Over18 = S.age - 18, S.age * 2 
+AS DoubleAge, S.weight / (S.height * S.height) BMI
 FROM Students S
 WHERE S.name LIKE '_%'
 ```
@@ -108,14 +108,38 @@ Equivalent keywords:
 - expr <> ALL <=> expr NOT IN (subquery)
 
 ### 1.3. Joins
-- INNER JOIN
+- `[INNER] JOIN` = join only the rows that have a match in both tables
+- `LEFT JOIN` = join all rows from the left table and the matched rows from the right table
+- `RIGHT JOIN` = join all rows from the right table and the matched rows from the left table
+- `FULL JOIN` = join all rows from both tables
+
 ```sql
 SELECT column1, column2, ...
-FROM Table1 T1 INNER JOIN Table2 T2 ON T1.column = T2.column
+FROM Table1 T1 JOIN Table2 T2 ON T1.column = T2.column
 ```
 
-- LEFT JOIN
+### 1.4 Aggregate functions
+After group by, you can only use aggregate functions in the select clause:
+- `COUNT`
+- `SUM`
+- `AVG`
+- `MIN`
+- `MAX`
+
+#### `HAVING` is like `WHERE` but for groups
+
+### 1.5. Subqueries in `FROM` clause
+
+e.g. Find all the players who have won at least one singles match
 ```sql
-SELECT column1, column2, ...
-FROM Table1 T1 LEFT JOIN Table2 T2 ON T1.column = T2.column
+SELECT *
+FROM (
+    SELECT *
+    FROM Player P
+    WHERE P.id in (
+        SELECT m.winnerId
+        FROM SinglesMatch m
+    )
+) as P2
+WHERE P2.numberOfPoints > 5000
 ```
