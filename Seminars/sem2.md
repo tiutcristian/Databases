@@ -10,7 +10,7 @@ SELECT [DISTINCT] [TOP N] column1, column2, ...
 FROM Table1 t1, Table2 t2, ...
 WHERE condition
 [GROUP BY column1]
-[HAVING condition]
+[HAVING group-qualification]
 [ORDER BY column1]
 ```
 
@@ -22,34 +22,39 @@ WHERE S.name LIKE '_%'
 ```
 
 ### 1.1. Set operators
-`UNION vs UNION ALL` - UNION removes duplicates, UNION ALL does not
 
-- UNION
+- `UNION` / `UNION ALL` (UNION removes duplicates, UNION ALL does not)
 ```sql
 SELECT column1, column2, ...
 FROM Table1
+
 UNION
+
 SELECT column1, column2, ...
 FROM Table2
 ```
 
-- INTERSECT
+- `INTERSECT`
 ```sql
 SELECT T.spyId
 FROM Tasks T, Missions M
 WHERE T.missionId = M.missionId AND M.location = 'Online'
+
 INTERSECT
+
 SELECT T.spyId
 FROM Tasks T, Missions M
 WHERE T.missionId = M.missionId AND M.location <> 'Online'
 ```
 
-- EXCEPT
+- `EXCEPT`
 ```sql
 SELECT T.spyId
 FROM Tasks T, Missions M
 WHERE T.missionId = M.missionId AND M.location = 'Online'
+
 EXCEPT
+
 SELECT T.spyId
 FROM Tasks T, Missions M
 WHERE T.missionId = M.missionId AND M.location <> 'Online'
@@ -62,20 +67,22 @@ a. Using `NOT IN`
 ```sql
 SELECT S.realName
 FROM Spies S
-WHERE S.spyId NOT IN
-    (SELECT T.spyId
+WHERE S.spyId NOT IN (
+    SELECT T.spyId
     FROM Tasks T
-    WHERE T.missionId = 100)
+    WHERE T.missionId = 100
+)
 ```
 
 b. Using `NOT EXISTS`
 ```sql
 SELECT S.realName
 FROM Spies S
-WHERE NOT EXISTS
-    (SELECT T.spyId
+WHERE NOT EXISTS (
+    SELECT T.spyId
     FROM Tasks T
-    WHERE T.missionId = 100 AND T.spyId = S.spyId)
+    WHERE T.missionId = 100 AND T.spyId = S.spyId
+)
 ```
 
 Find the real names of the spies with age greater than some spy named "John"
@@ -83,10 +90,11 @@ Find the real names of the spies with age greater than some spy named "John"
 ```sql
 SELECT S.realName
 FROM Spies S
-WHERE S.age > ANY
-    (SELECT S2.age
+WHERE S.age > ANY (
+    SELECT S2.age
     FROM Spies S2
-    WHERE S2.realName = 'John')
+    WHERE S2.realName = 'John'
+)
 ```
 
 Find the real names of the spies with age greater than all spies named "John"
@@ -94,10 +102,11 @@ Find the real names of the spies with age greater than all spies named "John"
 ```sql
 SELECT S.realName
 FROM Spies S
-WHERE S.age > ALL
-    (SELECT S2.age
+WHERE S.age > ALL (
+    SELECT S2.age
     FROM Spies S2
-    WHERE S2.realName = 'John')
+    WHERE S2.realName = 'John'
+)
 ```
 
 Equivalent keywords:  
@@ -105,7 +114,7 @@ Equivalent keywords:
 - ANY <=> MIN  
 - NOT IN <=> EXCEPT  
 - IN <=> INTERSECT  
-- expr <> ALL <=> expr NOT IN (subquery)
+- expr <> ALL (subquery) <=> expr NOT IN (subquery)
 
 ### 1.3. Joins
 - `[INNER] JOIN` = join only the rows that have a match in both tables
@@ -119,14 +128,14 @@ FROM Table1 T1 JOIN Table2 T2 ON T1.column = T2.column
 ```
 
 ### 1.4 Aggregate functions
-After group by, you can only use aggregate functions in the select clause:
+After `GROUP BY`, you can only use <b>aggregate functions</b> in the select clause:
 - `COUNT`
 - `SUM`
 - `AVG`
 - `MIN`
 - `MAX`
 
-#### `HAVING` is like `WHERE` but for groups
+Obs.: `HAVING` is like `WHERE` but for groups
 
 ### 1.5. Subqueries in `FROM` clause
 
