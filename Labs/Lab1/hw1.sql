@@ -76,9 +76,20 @@
         -- start_date
         -- end_date
 
-DROP DATABASE IF EXISTS Triathlon;
 
+-- remove all connections to the database
+USE [master];
+DECLARE @kill varchar(8000) = '';  
+SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';'  
+FROM sys.dm_exec_sessions
+WHERE database_id  = db_id('Triathlon')
+EXEC(@kill);
+-- drop the database
+DROP DATABASE IF EXISTS Triathlon;
+-- create the database
 CREATE DATABASE Triathlon;
+-- use the database
+USE Triathlon;
 
 CREATE TABLE Coaches(
     id INT PRIMARY KEY IDENTITY(1,1),
@@ -91,9 +102,13 @@ CREATE TABLE Teams(
     id INT PRIMARY KEY IDENTITY(1,1),
     name VARCHAR(100),
     country VARCHAR(100),
-    coach_id INT UNIQUE,
+    coach_id INT,
     FOREIGN KEY(coach_id) REFERENCES Coaches(id) ON DELETE SET NULL
 );
+
+CREATE UNIQUE NONCLUSTERED INDEX coach_id
+ON Teams(coach_id)
+WHERE coach_id IS NOT NULL;
 
 CREATE TABLE Athletes(
     id INT PRIMARY KEY IDENTITY(1,1),
