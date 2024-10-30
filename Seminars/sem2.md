@@ -115,6 +115,7 @@ Equivalent keywords:
 - NOT IN <=> EXCEPT  
 - IN <=> INTERSECT  
 - expr <> ALL (subquery) <=> expr NOT IN (subquery)
+- expr = ANY (subquery) <=> expr IN (subquery)
 
 ### 1.3. Joins
 - `[INNER] JOIN` = join only the rows that have a match in both tables
@@ -124,7 +125,8 @@ Equivalent keywords:
 
 ```sql
 SELECT column1, column2, ...
-FROM Table1 T1 JOIN Table2 T2 ON T1.column = T2.column
+FROM Table1 T1 
+JOIN Table2 T2 ON T1.column = T2.column
 ```
 
 ### 1.4 Aggregate functions

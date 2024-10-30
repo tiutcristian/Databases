@@ -17,13 +17,24 @@ INSERT INTO Events (name, [location]) VALUES ('Event 1', 'Location 1');
 INSERT INTO SwimPools (name, [location], [length], [width], [depth]) VALUES ('Pool 1', 'Location 1', 50, 25, 3);
 
 -- Insert a new bike track
-INSERT INTO BikeTracks (name, [location], [length], [difficulty]) VALUES ('Bike Track 1', 'Location 1', 100, 'easy');
+INSERT INTO BikeTracks (name, [location], [length], [difficulty]) VALUES ('Bike Track 1', 'Location 1', 100, 1);
 
 -- Insert a new running track
-INSERT INTO RunningTracks (name, [location], [length], [difficulty]) VALUES ('Running Track 1', 'Location 1', 100, 'easy');
+INSERT INTO RunTracks (name, [location], [length], [difficulty]) VALUES ('Running Track 1', 'Location 1', 100, 1);
 
 -- Insert a new race
 INSERT INTO Races (name, [date], swim_pool_id, bike_track_id, run_track_id, event_id)
-VALUES ("race1", "2020-01-01", 1, 1, 1, 1);
+VALUES ('race1', '2020-01-01', 1, 1, 1, 1);
 
--- !do some inserts in the race results for race 1 and some athletes
+-- Insert a new RaceResult
+INSERT INTO RaceResults (athlete_id, race_id, place_occupied, total_time, swim_time, bike_time, run_time)
+VALUES (1, 1, 1, 4000, 1000, 2000, 1000);
+
+-- Insert a new team withouth a coach
+INSERT into Teams (name, country) VALUES ('Team 2', 'Alaska');
+
+-- Insert a new coach
+INSERT into Coaches (name, email, experience) VALUES ('Coach 2', 'c2@gmail.com', 2);
+
+-- Put Alice into a team
+UPDATE Athletes SET team_id = 2 WHERE name = 'Alice';
