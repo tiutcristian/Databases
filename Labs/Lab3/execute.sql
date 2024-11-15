@@ -1,0 +1,2 @@
+-- EXEC sp_ModifyColumn 'RaceResults', 'total_time', 'DECIMAL(10,2)'
+-- EXEC sp_ModifyColumn 'RaceResults', 'total_time', 'INT'
