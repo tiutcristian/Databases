@@ -91,10 +91,7 @@ GO
 
 --------------------------------------------
 
-CREATE TABLE NewTable (
-    id INT NOT NULL,
-    name NVARCHAR(128)
-)
+EXEC sp_CreateTable NewTable, 'id INT NOT NULL, name NVARCHAR(128)'
 GO
 
 --------------------------------------------
@@ -136,6 +133,116 @@ GO
 
 --------------------------------------------
 
-DROP TABLE NewTable
+CREATE OR ALTER PROCEDURE sp_AddCandidateKey
+    @tableName NVARCHAR(128),
+    @columnName NVARCHAR(128)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = 'ALTER TABLE ' + @tableName + 
+    ' ADD CONSTRAINT CK__' + @tableName + '__' + @columnName +
+    ' UNIQUE (' + @columnName + ')'
+
+    EXEC sp_executesql @sql
+END
+
+EXEC sp_AddCandidateKey NewTable, id
+GO
+
+--------------------------------------------
+
+CREATE OR ALTER PROCEDURE sp_RemoveCandidateKey
+    @tableName NVARCHAR(128),
+    @columnName NVARCHAR(128)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = 'ALTER TABLE ' + @tableName + 
+    ' DROP CONSTRAINT CK__' + @tableName + '__' + @columnName
+
+    EXEC sp_executesql @sql
+END
+
+EXEC sp_RemoveCandidateKey NewTable, id
+GO
+
+--------------------------------------------
+
+CREATE OR ALTER PROCEDURE sp_AddForeignKey
+    @tableName NVARCHAR(128),
+    @columnName NVARCHAR(128),
+    @refTableName NVARCHAR(128),
+    @refColumnName NVARCHAR(128)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = 'ALTER TABLE ' + @tableName + 
+    ' ADD CONSTRAINT FK__' + @tableName + '__' + @columnName +
+    ' FOREIGN KEY (' + @columnName + ') REFERENCES ' + @refTableName + '(' + @refColumnName + ')'
+
+    EXEC sp_executesql @sql
+END
+
+EXEC sp_AddForeignKey NewTable, id, Teams, id
+GO
+
+--------------------------------------------
+
+CREATE OR ALTER PROCEDURE sp_RemoveForeignKey
+    @tableName NVARCHAR(128),
+    @columnName NVARCHAR(128)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = 'ALTER TABLE ' + @tableName + 
+    ' DROP CONSTRAINT FK__' + @tableName + '__' + @columnName
+
+    EXEC sp_executesql @sql
+END
+
+EXEC sp_RemoveForeignKey NewTable, id
+GO
+
+--------------------------------------------
+
+CREATE OR ALTER PROCEDURE sp_CreateTable
+    @tableName NVARCHAR(128),
+    @columns NVARCHAR(MAX)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = 'CREATE TABLE ' + @tableName + ' (' + @columns + ')'
+
+    EXEC sp_executesql @sql
+END
+
+EXEC sp_CreateTable NewTable, 'id INT NOT NULL, name NVARCHAR(128)'
+GO
+
+--------------------------------------------
+
+CREATE OR ALTER PROCEDURE sp_DropTable
+    @tableName NVARCHAR(128)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX)
+
+    SET @sql = 'DROP TABLE ' + @tableName
+
+    EXEC sp_executesql @sql
+END
+
+EXEC sp_DropTable NewTable
+GO
+
+--------------------------------------------
+
+EXEC sp_DropTable NewTable
+GO
 
 --------------------------------------------

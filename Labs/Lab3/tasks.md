@@ -5,9 +5,9 @@
 - [x] add / remove a column;
 - [x] add / remove a DEFAULT constraint;
 - [x] add / remove a primary key;
-- [ ] add / remove a candidate key;
-- [ ] add / remove a foreign key;
-- [ ] create / drop a table.
+- [x] add / remove a candidate key;
+- [x] add / remove a foreign key;
+- [x] create / drop a table.
 
 ## Create a new table 
 [ ] that holds the current version of the database schema  
