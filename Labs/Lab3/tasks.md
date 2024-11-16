@@ -3,8 +3,8 @@
 ## Write SQL scripts that
 - [x] modify the type of a column;
 - [x] add / remove a column;
-- [ ] add / remove a DEFAULT constraint;
-- [ ] add / remove a primary key;
+- [x] add / remove a DEFAULT constraint;
+- [x] add / remove a primary key;
 - [ ] add / remove a candidate key;
 - [ ] add / remove a foreign key;
 - [ ] create / drop a table.
