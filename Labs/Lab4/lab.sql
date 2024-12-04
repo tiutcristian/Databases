@@ -33,10 +33,9 @@ CREATE OR ALTER PROCEDURE insertRowIntoTable(@tableName VARCHAR(255), @row INT) 
 	SET @columnNames = LEFT(@columnNames, LEN(@columnNames) - 1); -- remove last comma
 	SET @columnValues = LEFT(@columnValues, LEN(@columnValues) - 1); -- remove last comma
 	SET @sql = 'INSERT INTO ' + @tableName + '(' + @columnNames + ') VALUES (' + @columnValues + ')';
-	IF (OBJECTPROPERTY(OBJECT_ID(@tableName), 'TableHasIdentity') = 1) BEGIN
+	IF (OBJECTPROPERTY(OBJECT_ID(@tableName), 'TableHasIdentity') = 1) BEGIN -- if table has identity column, enable identity insert
 		SET @sql = 'SET IDENTITY_INSERT ' + @tableName + ' ON;' + @sql + ';SET IDENTITY_INSERT ' + @tableName + ' OFF;'
 	END
-	-- PRINT @sql
 	EXEC (@sql)
 
 	CLOSE ColumnCursor;
@@ -163,13 +162,14 @@ CREATE VIEW simpleView AS
 	SELECT * FROM Coaches WHERE id < 10;
 GO
 
+
 CREATE VIEW coachTeamView AS
 	SELECT C.name AS CoachName, T.name AS TeamName
 	FROM Coaches C
 	JOIN Teams T ON C.id = T.coach_id
 GO
 
--- a view with a SELECT statement that has a GROUP BY clause, operates on at least 2 different tables and contains at least one JOIN operator.
+
 CREATE VIEW coachAthleteCountView AS
 	SELECT C.name AS CoachName, COUNT(A.id) AS AthleteCount
 	FROM Coaches C
@@ -180,7 +180,7 @@ GO
 
 
 
--- SETUP & TEST RUN
+-- SETUP
 EXEC addToTests 'Test 1';
 
 EXEC addToTables 'Sponsors';
@@ -203,6 +203,8 @@ EXEC connectViewToTest 'simpleView', 'Test 1';
 EXEC connectViewToTest 'coachTeamView', 'Test 1';
 EXEC connectViewToTest 'coachAthleteCountView', 'Test 1';
 
+
+-- RUN
 EXEC runTest 'Test 1', 'descriere test 1';
 SELECT * FROM TestRuns;
 DELETE FROM TestRuns;
