@@ -1,31 +1,42 @@
-CREATE PROCEDURE insertRowIntoTable(@tableName VARCHAR(255), @row INT) AS 
+CREATE OR ALTER PROCEDURE insertRowIntoTable(@tableName VARCHAR(255), @row INT) AS 
 	DECLARE @ColumnName NVARCHAR(128);
     DECLARE @DataType NVARCHAR(128);
 	DECLARE @sql NVARCHAR(255);
+	DECLARE @columnNames NVARCHAR(255);
+	DECLARE @columnValues NVARCHAR(255);
     DECLARE ColumnCursor CURSOR SCROLL FOR
     SELECT COLUMN_NAME, DATA_TYPE
     FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = @TableName;
 
-	SET @sql = 'INSERT INTO ' + @tableName + ' VALUES('
+	SET @columnNames = '';
+	SET @columnValues = '';
 
     OPEN ColumnCursor;
     FETCH NEXT FROM ColumnCursor INTO @ColumnName, @DataType;
     WHILE @@FETCH_STATUS = 0 BEGIN
+		SET @columnNames = @columnNames + @ColumnName + ',';
+		
 		IF @DataType = 'int' BEGIN
-			SET @sql = @sql + CAST(@row AS VARCHAR(255)) + ',' -- row number
+			SET @columnValues = @columnValues + CAST(@row AS VARCHAR(255)) + ',' -- row number
 		END
 		ELSE IF @DataType = 'varchar' BEGIN
-			SET @sql = @sql + '''' + 'row_' + CAST(@row AS VARCHAR(255)) + ''',' -- "row_" + row number
+			SET @columnValues = @columnValues + '''' + 'row_' + CAST(@row AS VARCHAR(255)) + ''',' -- "row_" + row number
 		END
-		ELSE IF @DataType = 'datetime' BEGIN
-			SET @sql = @sql + '@GETDATE(),' -- current date
+		ELSE IF @DataType = 'date' BEGIN
+			SET @columnValues = @columnValues + 'GETDATE(),' -- current date
         END
 
 		FETCH NEXT FROM ColumnCursor INTO @ColumnName, @DataType;
 	END
 
-	SET @sql = LEFT(@sql, LEN(@sql) - 1) + ')'; -- remove last comma
+	SET @columnNames = LEFT(@columnNames, LEN(@columnNames) - 1); -- remove last comma
+	SET @columnValues = LEFT(@columnValues, LEN(@columnValues) - 1); -- remove last comma
+	SET @sql = 'INSERT INTO ' + @tableName + '(' + @columnNames + ') VALUES (' + @columnValues + ')';
+	IF (OBJECTPROPERTY(OBJECT_ID(@tableName), 'TableHasIdentity') = 1) BEGIN
+		SET @sql = 'SET IDENTITY_INSERT ' + @tableName + ' ON;' + @sql + ';SET IDENTITY_INSERT ' + @tableName + ' OFF;'
+	END
+	-- PRINT @sql
 	EXEC (@sql)
 
 	CLOSE ColumnCursor;
@@ -33,7 +44,7 @@ CREATE PROCEDURE insertRowIntoTable(@tableName VARCHAR(255), @row INT) AS
 GO
 
 
-CREATE PROCEDURE populateTable (@tableName VARCHAR(255), @rows INT) AS
+CREATE OR ALTER PROCEDURE populateTable (@tableName VARCHAR(255), @rows INT) AS
 	DECLARE @i INT
 	SET @i = 1
 	WHILE @i <= @rows BEGIN
@@ -43,22 +54,22 @@ CREATE PROCEDURE populateTable (@tableName VARCHAR(255), @rows INT) AS
 GO
 
 
-CREATE PROCEDURE addToTables (@tableName VARCHAR(255)) AS
+CREATE OR ALTER PROCEDURE addToTables (@tableName VARCHAR(255)) AS
 	INSERT INTO Tables(Name) Values (@tableName);
 GO
 
 
-CREATE PROCEDURE addToViews(@viewName VARCHAR(255)) AS 
+CREATE OR ALTER PROCEDURE addToViews(@viewName VARCHAR(255)) AS 
 	INSERT INTO Views(Name) Values (@viewName);
 GO
 
 
-CREATE PROCEDURE addToTests(@testName VARCHAR(255)) AS 
+CREATE OR ALTER PROCEDURE addToTests(@testName VARCHAR(255)) AS 
 	INSERT INTO Tests(Name) Values (@testName);
 GO
 
 
-CREATE PROCEDURE connectTableToTest(@tableName VARCHAR(255), @testName VARCHAR(255), @rows INT, @pos INT) AS
+CREATE OR ALTER PROCEDURE connectTableToTest(@tableName VARCHAR(255), @testName VARCHAR(255), @rows INT, @pos INT) AS
 	DECLARE @tableId int
 	DECLARE @testId int
 	SET @tableId = (SELECT TableID FROM Tables WHERE Name=@tableName)
@@ -66,7 +77,8 @@ CREATE PROCEDURE connectTableToTest(@tableName VARCHAR(255), @testName VARCHAR(2
 	INSERT INTO TestTables VALUES(@testId, @tableId, @rows, @pos);
 GO	
 
-CREATE PROCEDURE connectViewToTest(@viewName VARCHAR(255), @testName VARCHAR(255)) AS
+
+CREATE OR ALTER PROCEDURE connectViewToTest(@viewName VARCHAR(255), @testName VARCHAR(255)) AS
 	DECLARE @viewId int
 	DECLARE @testId int
 	SET @viewId = (SELECT ViewID FROM Views WHERE Name=@viewName)
@@ -75,7 +87,9 @@ CREATE PROCEDURE connectViewToTest(@viewName VARCHAR(255), @testName VARCHAR(255
 GO
 
 
-CREATE PROCEDURE runTest(@testName VARCHAR(255), @description VARCHAR(255)) AS
+CREATE OR ALTER PROCEDURE runTest(@testName VARCHAR(255), @description VARCHAR(255)) AS
+	SET NOCOUNT ON
+
 	DECLARE @testStartTime DATETIME2
 	DECLARE @testRunId INT
 	DECLARE @tableId INT
@@ -97,7 +111,7 @@ CREATE PROCEDURE runTest(@testName VARCHAR(255), @description VARCHAR(255)) AS
 		SELECT T1.Name, T1.TableId, T2.NoOfRows, T2.Position
 		FROM Tables T1 INNER JOIN TestTables T2 ON T1.TableID = T2.TableID
 		WHERE T2.TestID = @testId
-		ORDER BY T2.Position ASC
+		ORDER BY T2.Position DESC
 	
 	DECLARE viewCursor CURSOR SCROLL FOR 
 		SELECT V.Name, V.ViewId
@@ -118,6 +132,7 @@ CREATE PROCEDURE runTest(@testName VARCHAR(255), @description VARCHAR(255)) AS
 	END
 	FETCH LAST FROM tableCursor INTO @table, @tableId, @rows, @pos
 	WHILE @@FETCH_STATUS = 0 BEGIN
+		SET @tableInsertStartTime = sysdatetime()
 		EXEC populateTable @table, @rows
 		SET @tableInsertEndTime = sysdatetime()
 		INSERT INTO TestRunTables VALUES(@testRunId, @tableId, @tableInsertStartTime, @tableInsertEndTime)
@@ -144,22 +159,50 @@ CREATE PROCEDURE runTest(@testName VARCHAR(255), @description VARCHAR(255)) AS
 GO
 
 
-CREATE VIEW some_view AS
-	SELECT * FROM sth
+CREATE VIEW simpleView AS
+	SELECT * FROM Coaches WHERE id < 10;
 GO
 
+CREATE VIEW coachTeamView AS
+	SELECT C.name AS CoachName, T.name AS TeamName
+	FROM Coaches C
+	JOIN Teams T ON C.id = T.coach_id
+GO
 
+-- a view with a SELECT statement that has a GROUP BY clause, operates on at least 2 different tables and contains at least one JOIN operator.
+CREATE VIEW coachAthleteCountView AS
+	SELECT C.name AS CoachName, COUNT(A.id) AS AthleteCount
+	FROM Coaches C
+	JOIN Teams T ON C.id = T.coach_id
+	JOIN Athletes A ON T.id = A.team_id
+	GROUP BY C.name
+GO
 
 
 
 -- SETUP & TEST RUN
 EXEC addToTests 'Test 1';
-EXEC addToTables 'some_table';
--- ...
-EXEC addToViews 'some_view';
--- ...
-EXEC connectTableToTest 'some_table', 'Test 1', 100, 2;
--- ...
-EXEC connectViewToTest 'some_view', 'Test 1';
--- ...
+
+EXEC addToTables 'Sponsors';
+EXEC addToTables 'Sponsorships';
+EXEC addToTables 'Athletes';
+EXEC addToTables 'Teams';
+EXEC addToTables 'Coaches';
+
+EXEC addToViews 'simpleView';
+EXEC addToViews 'coachTeamView';
+EXEC addToViews 'coachAthleteCountView';
+
+EXEC connectTableToTest 'Coaches', 'Test 1', 100, 1;
+EXEC connectTableToTest 'Teams', 'Test 1', 100, 2;
+EXEC connectTableToTest 'Athletes', 'Test 1', 100, 3;
+EXEC connectTableToTest 'Sponsors', 'Test 1', 100, 4;
+EXEC connectTableToTest 'Sponsorships', 'Test 1', 100, 5;
+
+EXEC connectViewToTest 'simpleView', 'Test 1';
+EXEC connectViewToTest 'coachTeamView', 'Test 1';
+EXEC connectViewToTest 'coachAthleteCountView', 'Test 1';
+
 EXEC runTest 'Test 1', 'descriere test 1';
+SELECT * FROM TestRuns;
+DELETE FROM TestRuns;
