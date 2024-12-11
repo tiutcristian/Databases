@@ -53,6 +53,11 @@ CREATE OR ALTER PROCEDURE populateTable (@tableName VARCHAR(255), @rows INT) AS
 GO
 
 
+CREATE OR ALTER PROCEDURE deleteFromTable(@tableName VARCHAR(255)) AS
+	EXEC ('DELETE FROM ' + @tableName)
+GO
+
+
 CREATE OR ALTER PROCEDURE addToTables (@tableName VARCHAR(255)) AS
 	INSERT INTO Tables(Name) Values (@tableName);
 GO
@@ -126,7 +131,7 @@ CREATE OR ALTER PROCEDURE runTest(@testName VARCHAR(255), @description VARCHAR(2
 	OPEN tableCursor
 	FETCH FIRST FROM tableCursor INTO @table, @tableId, @rows, @pos
 	WHILE @@FETCH_STATUS = 0 BEGIN
-		EXEC ('DELETE FROM ' + @table)
+		EXEC deleteFromTable @table
 		FETCH tableCursor INTO @table, @tableId, @rows, @pos
 	END
 	FETCH LAST FROM tableCursor INTO @table, @tableId, @rows, @pos
@@ -208,3 +213,6 @@ EXEC connectViewToTest 'coachAthleteCountView', 'Test 1';
 EXEC runTest 'Test 1', 'descriere test 1';
 SELECT * FROM TestRuns;
 DELETE FROM TestRuns;
+
+SELECT * FROM TestRunTables;
+SELECT * FROM TestRunViews;
