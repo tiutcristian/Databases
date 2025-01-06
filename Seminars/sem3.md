@@ -25,7 +25,8 @@ EXEC name_of_procedure 1, 'string', @parameter3 OUTPUT, @parameter4 OUTPUT;
 \
 Dynamic execution of a stored procedure (security risk):
 ```sql
--- to be added
+SET @sql = 'ALTER TABLE ' + @tableName + ' ALTER COLUMN ' + @columnName + ' ' + @newType
+EXEC sp_executesql @sql
 ```
  
 ## Variables
@@ -84,15 +85,19 @@ FROM table_name;
 - Like the classic `for` loop in programming languages.
 ```sql
 DECLARE cursor_name CURSOR FOR
-SELECT column1, column2
-FROM table_name
+    SELECT column1, column2
+    FROM table_name
+
 OPEN cursor_name
+
 FETCH cursor_name INTO @variable1, @variable2
-WHILE @@FETCH_STATUS = 0
-BEGIN
+
+WHILE @@FETCH_STATUS = 0 BEGIN
     -- do something
     FETCH cursor_name INTO @variable1, @variable2
 END
+
 CLOSE cursor_name
+
 DEALLOCATE cursor_name
 ```

@@ -143,7 +143,8 @@ USING (
         MAX(grade_date) AS grade_date
     FROM Grades
     GROUP BY student, course
-) AS mergedData ON Grades.gid = mergedData.gid
+) AS mergedData 
+ON Grades.gid = mergedData.gid
 WHEN MATCHED THEN
     UPDATE SET 
         Grades.course = mergedData.course,

@@ -15,8 +15,9 @@ WHERE condition
 ```
 
 ```sql
-SELECT Over18 = S.age - 18, S.age * 2 
-AS DoubleAge, S.weight / (S.height * S.height) BMI
+SELECT  Over18 = S.age - 18, 
+        S.age * 2 AS DoubleAge, 
+        S.weight / (S.height * S.height) BMI
 FROM Students S
 WHERE S.name LIKE '_%'
 ```
